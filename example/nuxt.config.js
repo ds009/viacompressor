@@ -12,7 +12,7 @@ export default {
         enforce: 'pre',
         options: {
           quality: 0.8,
-          exclude: null,
+          exclude: /-min/,
         }
       });
     },
