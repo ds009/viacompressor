@@ -11,8 +11,9 @@ export default {
         loader: 'viacompressor',
         enforce: 'pre',
         options: {
+          compress: isDev&&isClient,
           quality: 0.8,
-          exclude: /-min/,
+          exclude: /(-min)|(exclude)/,
         }
       });
     },
