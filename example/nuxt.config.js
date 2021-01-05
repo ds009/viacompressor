@@ -5,11 +5,10 @@ export default {
   build: {
     extend(webpackConfig, { isDev, isClient }) {
       webpackConfig.resolveLoader.modules.push('..'); // for test only
-      webpackConfig.module.rules.push({
-        test: /\.(jpg|png|svg)$/,
+      webpackConfig.module.rules.unshift({
+        test: /\.(jpe?g|png|svg)$/i,
         exclude: [/node_modules/,/\.nuxt/],
         loader: 'viacompressor',
-        enforce: 'pre',
         options: {
           compress: isDev&&isClient,
           quality: 0.8,

@@ -2,25 +2,13 @@ const loaderUtils = require('loader-utils')
 const imagemin = require('imagemin');
 const imageminJpegtran = require('imagemin-jpegtran');
 const imageminPngquant = require('imagemin-pngquant');
+const imageminSvgo = require('imagemin-svgo');
 const fs = require('fs')
 const md5 = require('blueimp-md5')
 
 function handlePath(resourcePath) {
   const index = resourcePath.lastIndexOf('/')
   return {folder:resourcePath.slice(0, index),name:resourcePath.slice(index+1)}
-}
-async function compress(path,folder, quality){
-
-  const files = await imagemin([path], {
-    destination: folder,
-    plugins: [
-      imageminJpegtran(),
-      imageminPngquant({
-        quality: [quality,1]
-      })
-    ]
-  });
-  return md5(files[0].data);
 }
 module.exports = function (source, map) {
   // init options
@@ -33,6 +21,15 @@ module.exports = function (source, map) {
 
   // ignore excluded files
   if (!this.resourcePath || (options.exclude && this.resourcePath.match(options.exclude))) return source
+
+  const stats = fs.statSync(this.resourcePath);
+  const fileSizeInMegabytes = stats.size / (1024*1024);
+  if(fileSizeInMegabytes<0.1){
+    // 小于100K不处理
+    return source;
+  }else if (fileSizeInMegabytes>1){
+    console.log('!!!Image size too large: '+this.resourcePath)
+  }
   const {folder,name} = handlePath(this.resourcePath);
   const infoPath = folder+'/min.json';
   const file = fs.readFileSync(this.resourcePath);
@@ -49,10 +46,19 @@ module.exports = function (source, map) {
   }catch (e) {
     // ignore
   }
-
-  compress(this.resourcePath,folder, quality).then(newMd5=>{
-    oldInfo[name] = newMd5
+  imagemin([this.resourcePath], {
+    destination: folder,
+    plugins: [
+      imageminJpegtran(),
+      imageminPngquant({
+        quality: [quality,1]
+      }),
+      imageminSvgo()
+    ]
+  }).then(files=>{
+    console.log('compressed file: '+ name)
+    oldInfo[name] = md5(files[0].data)
     fs.writeFileSync(infoPath, JSON.stringify(oldInfo, null, 2), {flag: 'w+'})
-  })
+  });
   return source
 }
