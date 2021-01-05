@@ -1,6 +1,6 @@
 const loaderUtils = require('loader-utils')
 const imagemin = require('imagemin');
-const imageminJpegtran = require('imagemin-jpegtran');
+const imageminMozjpeg = require('imagemin-mozjpeg');
 const imageminPngquant = require('imagemin-pngquant');
 const imageminSvgo = require('imagemin-svgo');
 const fs = require('fs')
@@ -49,7 +49,7 @@ module.exports = function (source, map) {
   imagemin([this.resourcePath], {
     destination: folder,
     plugins: [
-      imageminJpegtran(),
+      imageminMozjpeg([{quality:quality*100||80}]),
       imageminPngquant({
         quality: [quality,1]
       }),
