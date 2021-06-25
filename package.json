@@ -1,6 +1,6 @@
 {
   "name": "viacompressor",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Compress images in development environment",
   "main": "viacompressor/index.js",
   "repository": {
@@ -15,12 +15,7 @@
   "author": "ds009",
   "license": "MIT",
   "dependencies": {
-    "blueimp-md5": "^2.10.0",
-    "imagemin": "^7.0.1",
-    "imagemin-mozjpeg": "^9.0.0",
-    "imagemin-optipng": "^8.0.0",
-    "imagemin-pngquant": "^9.0.1",
-    "imagemin-svgo": "^8.0.0",
+    "@squoosh/lib": "^0.3.1",
     "webpack": "^4.28.3"
   }
 }

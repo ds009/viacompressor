@@ -1,10 +1,13 @@
 const loaderUtils = require('loader-utils')
-const imagemin = require('imagemin');
-const imageminMozjpeg = require('imagemin-mozjpeg');
-const imageminPngquant = require('imagemin-pngquant');
-const imageminSvgo = require('imagemin-svgo');
 const fs = require('fs')
-const md5 = require('blueimp-md5')
+const squoosh  = require('@squoosh/lib');
+
+const {ImagePool} = squoosh;
+const extMap = {
+  jpg:'mozjpeg',
+  jpeg:'mozjpeg',
+  png:'oxipng',
+}
 
 function handlePath(resourcePath) {
   const index = resourcePath.lastIndexOf('/')
@@ -17,48 +20,48 @@ module.exports = function (source, map) {
     : null
   const options = Object.assign({}, loaderUtils.getOptions(this), urlQuery)
   if(!options.compress) return source;
-  const quality = options.quality || 0.8;
-
+  const quality = (options.quality || 0.8)*100;
+  const path = this.resourcePath;
   // ignore excluded files
-  if (!this.resourcePath || (options.exclude && this.resourcePath.match(options.exclude))) return source
+  if (!path || (options.exclude && path.match(options.exclude))) return source
 
-  const stats = fs.statSync(this.resourcePath);
-  const fileSizeInMegabytes = stats.size / (1024*1024);
-  if(fileSizeInMegabytes<0.1){
+  const currentSize = fs.statSync(path).size;
+  if(currentSize < 0.1 * 1024 * 1024){
     // 小于100K不处理
     return source;
-  }else if (fileSizeInMegabytes>1){
-    console.log('!!!Image size too large: '+this.resourcePath)
+  }else if (currentSize > 1024 * 1024){
+    console.log('!!!Image size too large: '+path)
+    // show alert and go on
   }
-  const {folder,name} = handlePath(this.resourcePath);
+  const {folder,name} = handlePath(path);
   const infoPath = folder+'/min.json';
-  const file = fs.readFileSync(this.resourcePath);
-  const oldMd5 = md5(file);
   let oldInfo = {};
   try {
     const infoFile = fs.readFileSync(infoPath)
     if(infoFile){
       oldInfo = JSON.parse(infoFile)
-      if(oldInfo[name]===oldMd5){
+      if(oldInfo[name]===currentSize){
+        // compressed before
         return source
       }
     }
   }catch (e) {
     // ignore
   }
-  imagemin([this.resourcePath], {
-    destination: folder,
-    plugins: [
-      imageminMozjpeg([{quality:quality*100||80}]),
-      imageminPngquant({
-        quality: [quality,1]
-      }),
-      imageminSvgo()
-    ]
-  }).then(files=>{
-    console.log('compressed file: '+ name)
-    oldInfo[name] = md5(files[0].data)
+  const callback = this.async();
+  async function compress(callback) {
+    const imagePool = new ImagePool();
+    const image = imagePool.ingestImage(path);
+    const encodeType = extMap[name.split('.').pop()];
+    await image.decoded;
+    await image.encode({[encodeType]:{quality}});
+    await imagePool.close();
+    const encoded = await image.encodedWith[encodeType]
+    const rawEncodedImage = encoded.binary;
+    fs.writeFileSync(path, rawEncodedImage);
+    oldInfo[name] = encoded.size;
     fs.writeFileSync(infoPath, JSON.stringify(oldInfo, null, 2), {flag: 'w+'})
-  });
-  return source
+    callback(null,source);
+  }
+  compress(callback)
 }
