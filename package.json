@@ -1,6 +1,6 @@
 {
   "name": "viacompressor",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Compress images in development environment",
   "main": "viacompressor/index.js",
   "repository": {
