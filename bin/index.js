@@ -6,6 +6,7 @@ const glob = require('glob');
 const usage = "\nUsage: $0 [-q <quality>] [-d <directory>] [-i <ignore>] [-m <minSize>]  [-l <limitSize>] to compress images;";
 const options = yargs
   .usage(usage)
+  .alias('h', 'help')
   .alias('d', 'directory')
   .default('d', '.')
   .alias('q', 'quality')
@@ -16,7 +17,7 @@ const options = yargs
   .default('m', 0.1)
   .describe('m', 'Min size of image(MB) to be processed')
   .alias('p', 'pattern')
-  .default('p', 'jpg,png,gif')
+  .default('p', 'jpg,png,webp')
   .describe('p', 'file patterns to be used by glob')
   .alias('l', 'limitSize')
   .default('l', 1)

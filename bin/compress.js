@@ -5,6 +5,7 @@ const extMap = {
   jpg: 'mozjpeg',
   jpeg: 'mozjpeg',
   png: 'oxipng',
+  webp: 'webp',
 }
 const imagePool = new ImagePool();
 
