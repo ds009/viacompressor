@@ -22,7 +22,8 @@ const options = yargs
   .help(true)
   .argv;
 
-const files = glob.sync(`${options.d}/**/*.{${options.p}}`, options)
+const pattern = options.p.includes(',')?`{${options.p}}`:options.p
+const files = glob.sync(`${options.d}/**/*.${pattern}`, options)
 
 let processed = 0;
 const callback = async () => {

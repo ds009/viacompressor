@@ -7,7 +7,6 @@ const extMap = {
   png:'oxipng',
 }
 const imagePool = new ImagePool();
-console.log('create image pool');
 
 function handlePath(resourcePath) {
   const index = resourcePath.lastIndexOf('/')
@@ -39,8 +38,7 @@ const compress =  async function (file, options) {
       }
     }
   }catch (e) {
-    console.error(e);
-    return;
+    // ignore when no info file is found
   }
 
   const image = imagePool.ingestImage(file);
@@ -51,15 +49,15 @@ const compress =  async function (file, options) {
   const rawEncodedImage = encoded.binary;
   fs.writeFileSync(file, rawEncodedImage);
   // json might be changed by other process
+  let currentInfo = {}
   try {
     const currentInfoFile = fs.readFileSync(infoPath);
-    const currentInfo = JSON.parse(currentInfoFile);
-    currentInfo[name] = encoded.size;
-    fs.writeFileSync(infoPath, JSON.stringify(currentInfo, null, 2), {flag: 'w+'});
+    currentInfo = JSON.parse(currentInfoFile);
   }catch (e) {
-    console.error(e);
-    return;
+    // ignore when no info file is found
   }
+  currentInfo[name] = encoded.size;
+  fs.writeFileSync(infoPath, JSON.stringify(currentInfo, null, 2), {flag: 'w+'});
 }
 const close = ()=>imagePool.close();
 module.exports = {
