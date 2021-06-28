@@ -7,49 +7,48 @@ const extMap = {
   png:'oxipng',
 }
 const imagePool = new ImagePool();
+console.log('create image pool');
 // 没有close()因为公用的 close会出错
 
 function handlePath(resourcePath) {
   const index = resourcePath.lastIndexOf('/')
   return {folder:resourcePath.slice(0, index),name:resourcePath.slice(index+1)}
 }
-module.exports = async function (source, options) {
-  const quality = (options.quality || 0.8)*100;
-  const path = options.path;
-  // ignore excluded files
-  if (!path || (options.exclude && path.match(options.exclude))) return source
-
-  const currentSize = fs.statSync(path).size;
-  if(currentSize < 0.1 * 1024 * 1024){
-    // 小于100K不处理
+module.exports = async function (file, options) {
+  const {quality,minSize,limitSize}= options.quality;
+  const currentSize = fs.statSync(file).size;
+  console.log("processing "+ file)
+  const mega = 1024 * 1024
+  if(currentSize < minSize * mega){
+    // 小于minSize不处理
     return;
-  }else if (currentSize > 1024 * 1024){
-    console.log('!!!Image size too large: '+path)
+  }else if (currentSize >limitSize * mega){
+    console.log('!!!Image size too large: '+file);
     // show alert and go on
   }
-  const {folder,name} = handlePath(path);
+  const {folder,name} = handlePath(file);
   const infoPath = folder+'/min.json';
   let oldInfo = {};
   try {
-    const infoFile = fs.readFileSync(infoPath)
+    const infoFile = fs.readFileSync(infoPath);
     if(infoFile){
-      oldInfo = JSON.parse(infoFile)
+      oldInfo = JSON.parse(infoFile);
       if(oldInfo[name]===currentSize){
         // compressed before
-        return source
+        return;
       }
     }
   }catch (e) {
     // ignore
   }
 
-  const image = imagePool.ingestImage(path);
+  const image = imagePool.ingestImage(file);
   const encodeType = extMap[name.split('.').pop()];
   await image.decoded;
   await image.encode({[encodeType]:{quality}});
   const encoded = await image.encodedWith[encodeType]
   const rawEncodedImage = encoded.binary;
-  fs.writeFileSync(path, rawEncodedImage);
+  fs.writeFileSync(file, rawEncodedImage);
   oldInfo[name] = encoded.size;
   fs.writeFileSync(infoPath, JSON.stringify(oldInfo, null, 2), {flag: 'w+'})
 }

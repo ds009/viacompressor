@@ -2,13 +2,15 @@
   "name": "viacompressor",
   "version": "0.0.5",
   "description": "Compress images in development environment",
-  "main": "viacompressor/index.js",
+  "main": "bin/index.js",
+  "bin": {
+    "viacompressor": "./bin/index.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ds009/viacompressor"
   },
   "keywords": [
-    "vue",
     "compress",
     "image"
   ],
@@ -16,6 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "@squoosh/lib": "^0.3.1",
-    "webpack": "^4.28.3"
+    "glob": "^7.1.7",
+    "yargs": "^17.0.1"
   }
 }
