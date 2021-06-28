@@ -3,13 +3,15 @@ const yargs = require('yargs');
 const {compress, close} = require('./compress');
 const glob = require('glob');
 
-const usage = "\nUsage: $0 [-q <quality>] [-d <directory>] [-m <minSize>] to compress images;";
+const usage = "\nUsage: $0 [-q <quality>] [-d <directory>] [-i <ignore>] [-m <minSize>]  [-l <limitSize>] to compress images;";
 const options = yargs
   .usage(usage)
   .alias('d', 'directory')
   .default('d', '.')
   .alias('q', 'quality')
   .default('q', 80)
+  .alias('i', 'ignore')
+  .default('i', './node_modules/**')
   .alias('m', 'minSize')
   .default('m', 0.1)
   .describe('m', 'Min size of image(MB) to be processed')
@@ -23,8 +25,7 @@ const options = yargs
   .argv;
 
 const pattern = options.p.includes(',')?`{${options.p}}`:options.p
-const files = glob.sync(`${options.d}/**/*.${pattern}`, options)
-
+const files = glob.sync(`${options.d}/**/*.${pattern}`, {ignore:options.i})
 let processed = 0;
 const callback = async () => {
   processed += 1;
