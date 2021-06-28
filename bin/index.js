@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-const yargs = require("yargs");
-const compress = require('./compress');
-const glob = require("glob")
+const yargs = require('yargs');
+const {compress, close} = require('./compress');
+const glob = require('glob');
 
 const usage = "\nUsage: $0 [-q <quality>] [-d <directory>] [-m <minSize>] to compress images;";
 const options = yargs
@@ -22,12 +22,20 @@ const options = yargs
   .help(true)
   .argv;
 
-console.log(options);
+const files = glob.sync(`${options.d}/**/*.{${options.p}}`, options)
 
-glob(`${options.d}/**/*.{${options.p}}`, options, function (er, files) {
-  files.forEach(function(file){
-    compress(file, options);
-  });
-})
+let processed = 0;
+const callback = async () => {
+  processed += 1;
+  if (processed === files.length) {
+    await close()
+    process.exit();
+  }
+}
+files.forEach(async function (file) {
+  await compress(file, options);
+  await callback();
+});
+
 
 

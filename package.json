@@ -1,7 +1,7 @@
 {
   "name": "viacompressor",
-  "version": "0.0.5",
-  "description": "Compress images in development environment",
+  "version": "0.0.6",
+  "description": "Compress images using squoosh without repeating",
   "main": "bin/index.js",
   "bin": {
     "viacompressor": "./bin/index.js"

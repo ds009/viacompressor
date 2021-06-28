@@ -8,21 +8,21 @@ const extMap = {
 }
 const imagePool = new ImagePool();
 console.log('create image pool');
-// 没有close()因为公用的 close会出错
 
 function handlePath(resourcePath) {
   const index = resourcePath.lastIndexOf('/')
   return {folder:resourcePath.slice(0, index),name:resourcePath.slice(index+1)}
 }
-module.exports = async function (file, options) {
-  const {quality,minSize,limitSize}= options.quality;
+const compress =  async function (file, options) {
+
+  const {quality,minSize,limitSize}= options;
   const currentSize = fs.statSync(file).size;
-  console.log("processing "+ file)
+
   const mega = 1024 * 1024
-  if(currentSize < minSize * mega){
+  if(currentSize < (minSize) * mega){
     // 小于minSize不处理
     return;
-  }else if (currentSize >limitSize * mega){
+  }else if (currentSize > (limitSize) * mega){
     console.log('!!!Image size too large: '+file);
     // show alert and go on
   }
@@ -39,7 +39,8 @@ module.exports = async function (file, options) {
       }
     }
   }catch (e) {
-    // ignore
+    console.error(e);
+    return;
   }
 
   const image = imagePool.ingestImage(file);
@@ -49,6 +50,19 @@ module.exports = async function (file, options) {
   const encoded = await image.encodedWith[encodeType]
   const rawEncodedImage = encoded.binary;
   fs.writeFileSync(file, rawEncodedImage);
-  oldInfo[name] = encoded.size;
-  fs.writeFileSync(infoPath, JSON.stringify(oldInfo, null, 2), {flag: 'w+'})
+  // json might be changed by other process
+  try {
+    const currentInfoFile = fs.readFileSync(infoPath);
+    const currentInfo = JSON.parse(currentInfoFile);
+    currentInfo[name] = encoded.size;
+    fs.writeFileSync(infoPath, JSON.stringify(currentInfo, null, 2), {flag: 'w+'});
+  }catch (e) {
+    console.error(e);
+    return;
+  }
+}
+const close = ()=>imagePool.close();
+module.exports = {
+  compress,
+  close,
 }
